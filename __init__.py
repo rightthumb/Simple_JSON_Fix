@@ -257,6 +257,10 @@ class Simple_JSON_Fix:
 						li.append(False)
 						v[f] = False
 						f = None
+					elif txtl.lower().startswith('null'):
+						li.append(None)
+						v[f] = None
+						f = None
 					oo = cc
 
 
