@@ -2,10 +2,8 @@
 
 from os import path
 class Simple_JSON_Fix:
-	def __init__( self, path_or_code, i=0, save=False ):
-		self.json={}
+	def __init__( self, path_or_code, i=0, save=None ):
 		self.index={}
-		self.json = {}
 		if path.isfile(path_or_code):
 			with open( path_or_code, 'r' ) as file:
 				self.asset = file.read()
@@ -57,15 +55,22 @@ class Simple_JSON_Fix:
 				self.index=self.vindex(self.asset,i)
 		if not i in self.index:
 			self.asset=code
-		self.json=self.variable()
+		self.var=self.variable()
 
 
 
-		if save and path.isfile(path_or_code):
-			import simplejson
-			f = open(path_or_code,'w')
-			f.write(str(simplejson.dumps(self.json, indent=4, sort_keys=False)))
-			f.close()
+		if not save is None and save and path.isfile(path_or_code):
+			if type(save) == str:
+				path_or_code=save
+
+			try:
+				import simplejson
+				f = open(path_or_code,'w')
+				f.write(str(simplejson.dumps(self.var, indent=4, sort_keys=False)))
+				f.close()
+			except Exception as e:
+				print(e)
+
 
 
 	def vindex( self, code, i=0, esc='\\', n='' ):
@@ -189,11 +194,11 @@ class Simple_JSON_Fix:
 		n = {}
 		for k in dic:
 			n[k] = dic[k]
-		self.json_records.append(n)
+		self.var_records.append(n)
 
 
 	def variable( self ):
-		self.json_records = []
+		self.var_records = []
 		def getData(o,c,f=None, p=[],v={}, l=None, spent=[], rec=[], top=True, li=[]):
 			oo = o
 			cc = c
@@ -267,15 +272,15 @@ class Simple_JSON_Fix:
 				oo+=1
 			if top:
 				if self.asset[o] == '[':
-					if self.json_records:
-						return self.json_records
+					if self.var_records:
+						return self.var_records
 					else:
 						return li
 				else:
-					if len(self.json_records) > 1:
-						return self.json_records
-					if self.json_records:
-						return self.json_records[0]
+					if len(self.var_records) > 1:
+						return self.var_records
+					if self.var_records:
+						return self.var_records[0]
 					return v
 			if self.asset[o] == '[':
 				return li
@@ -286,7 +291,7 @@ class Simple_JSON_Fix:
 		o = 0
 		c = len(self.asset)-1
 		ss = getData(o,c)
-		self.json=ss
+		self.var=ss
 		return ss
 
 	def find_all( self, string, sub ):
@@ -301,5 +306,5 @@ class Simple_JSON_Fix:
 
 
 
-# test=Simple_JSON_Fix( 'file.json', save=True )
-# python_dic=test.json
+# test=Simple_JSON_Fix( 'file.json', save='file-FIXED.json' )
+# python_variable=test.var
