@@ -12,52 +12,9 @@ class Simple_JSON_Fix:
 
 		while self.asset.startswith(' ') or self.asset.startswith('\t'):
 			self.asset=self.asset[1:]
-		# print('self.asset',self.asset)
 		code=self.asset
 		self.index = self.vindex(self.asset,i)
-		# print(self.index)
-
-		# for o in index:
-		# 	c=index[o]
-		# 	# print(o,c,type(self.asset))
-		# 	print( self.asset[o:c+1] )
-
-
-		loop=0
-		while loop < 4 and not i in self.index:
-			self.asset.replace('\t','    ')
-			while '\n ' in self.asset:
-				self.asset=self.asset.replace('\n ','\n')
-			while ' \n' in self.asset:
-				self.asset=self.asset.replace(' \n','\n')
-			self.asset=self.asset.replace('\n','')
-
-			loop+=1
-			probable_1 = self.find_all(self.asset,'}}')
-			if probable_1:
-				probable_1.reverse()
-				a=self.asset[i:probable_1[0]]
-				b=self.asset[probable_1[0]+1:len(self.asset)]
-				self.asset=a+b
-				self.index=self.vindex(self.asset,i)
-
-		if not i in self.index:
-			self.asset=code
-			while loop < 10 and not i in self.index:
-				loop+=1
-				self.asset+='}'
-				self.index=self.vindex(self.asset,i)
-		if not i in self.index:
-			self.asset=code
-			while loop < 10 and not i in self.index:
-				loop+=1
-				self.asset='{'+self.asset
-				self.index=self.vindex(self.asset,i)
-		if not i in self.index:
-			self.asset=code
 		self.var=self.variable()
-
-
 
 		if not save is None and save and path.isfile(path_or_code):
 			if type(save) == str:
@@ -73,20 +30,25 @@ class Simple_JSON_Fix:
 
 
 
-	def vindex( self, code, i=0, esc='\\', n='' ):
+	def vindex( self,code, i=0, esc='\\', n='', v=True,r=False,both=True ):
+		if type(code)==list:
+			code=''.join(code)
 		at=i
 
-		table_brackets = {}
-		table_brackets['i']=0
-		table_brackets['open'] = {}
+			
+		table={}
+		
+		table['brackets'] = {}
+		table['brackets']['i']=0
+		table['brackets']['open'] = {}
 
-		table_braces = {}
-		table_braces['i']=0
-		table_braces['open'] = {}
+		table['braces'] = {}
+		table['braces']['i']=0
+		table['braces']['open'] = {}
 
-		table_par = {}
-		table_par['i']=0
-		table_par['open'] = {}
+		table['par'] = {}
+		table['par']['i']=0
+		table['par']['open'] = {}
 
 
 
@@ -114,78 +76,129 @@ class Simple_JSON_Fix:
 				c5=c4+code[i+4]
 			except Exception as e:
 				c5=''
-
-
 			if len(esc) == 1 and c==esc:
 				i+=1
-			elif len(n) == 1 and c==n:
-				return i
-			elif len(n) == 2 and c2==n:
-				return i+1
-			elif len(n) == 3 and c3==n:
-				return i+2
-			elif not n and c in '0123456789.':
-				cx = c
-				ii=i-1
-				while cx in '0123456789.':
-					ii+=1
-					cx=code[ii]
-				index[i] = ii-1
-				i=index[i]
-			elif not n and c in '\\/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
-				cx = c
-				ii=i-1
-				# while cx in '*+?\\.^$&|/{[]()}-,^'+'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._':
-				while cx in '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._':
-					ii+=1
-					cx=code[ii]
-				index[i] = ii-1
-				i=index[i]
-			elif not n and c3 == '"""':
-				index[i] = self.vindex(code,i+3,esc,n='"""')
-				i=index[i]
-			elif not n and c3 == "'''":
-				index[i] = self.vindex(code,i+3,esc,n="'''")
-				i=index[i]
-			elif not n and c == "'":
-				index[i] = self.vindex(code,i+1,esc,n="'")
-				i=index[i]
-			elif not n and c == '"':
-				index[i] = self.vindex(code,i+1,esc,n='"')
-				i=index[i]
-			elif not n and c2 == '/*':
-				i = self.vindex(code,i+2,esc,n='*/')
-			elif not n and c2 == '//':
-				i = self.vindex(code,i+2,esc,n='\n')
+			else:
+				if len(esc) == 1 and c==esc:
+					i+=1
+				if n=='\n' and r:
+					ii=i
+					c=code[i]
+					while not ii == 0 and c == '\n':
+						ii-=1
+						c=code[ii]
+						if ii == 0:
+							return 0
+						elif c == '\n':
+							return ii
+
+				elif len(n) == 1 and c==n:
+					return i
+				elif len(n) == 2 and c2==n:
+					return i+1
+				elif len(n) == 3 and c3==n:
+					return i+2
+				elif len(n):
+					pass
+				else:
+					if not n and c in '0123456789.':
+						cx = c
+						ii=i-1
+						while cx in '0123456789.':
+							ii+=1
+							try:
+								cx=code[ii]
+							except Exception as e:
+								ii-=1
+								index[i] = ii
+								if both:
+									index[ii] = i
+								break
+						index[i] = ii
+						if both:
+							index[ii] = i
+						i=ii
+					elif not n and c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+						cx = c
+						ii=i-1
+						while cx in '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._':
+							ii+=1
+							try:
+								cx=code[ii]
+							except Exception as e:
+								ii-=1
+								index[i] = ii
+								if both:
+									index[ii] = i
+								break
+
+						index[i] = ii
+						if both:
+							index[ii] = i
+						i=ii
+					elif not n and c3 == '"""':
+						s=vindex(code,i+3,esc,n='"""',v=0)
+						index[i] = s
+						if both:
+							index[s] = i
+						i=s
+					elif not n and c3 == "'''":
+						s=vindex(code,i+3,esc,n="'''",v=0)
+						index[i] = s
+						if both:
+							index[s] = i
+					elif not n and c == "'":
+						s=vindex(code,i+1,esc,n="'",v=0)
+						index[i] = s
+						if both:
+							index[s] = i
+						i=s
+					elif not n and c == '"':
+						s=vindex(code,i+1,esc,n='"',v=0)
+						index[i] = s
+						if both:
+							index[s] = i
+						i = s
+					elif not n and c2 == '/*':
+						i = vindex(code,i+2,esc,n='*/',v=0)
+					elif not n and c2 == '//':
+						i = vindex(code,i+2,esc,n='\n',v=0)+1
 
 
-			elif not n and c == '{':
-				table_brackets['i']+=1
-				table_brackets['open'][table_brackets['i']]=i
-			elif not n and c == '}':
-				s=table_brackets['open'][table_brackets['i']]
-				index[ s ]=i
-				table_brackets['i']-=1
-				if s==at:
-					return index
-			elif not n and c == '[':
-				table_braces['i']+=1
-				table_braces['open'][table_braces['i']]=i
-			elif not n and c == ']':
-				s=table_braces['open'][table_braces['i']]
-				index[ s ]=i
-				table_braces['i']-=1
-				if s==at:
-					return index
-			elif not n and c == '(':
-				table_par['i']+=1
-				table_par['open'][table_par['i']]=i
-			elif not n and c == ')':
-				s=table_par['open'][table_par['i']]
-				index[ s ]=i
-				table_par['i']-=1
-				if s==at:
-					return index
+					elif not n and c == '{':
+						table['brackets']['i']+=1
+						table['brackets']['open'][table['brackets']['i']]=i
+					elif not n and c == '}':
+						s=table['brackets']['open'][table['brackets']['i']]
+						index[ s ]=i
+						if both:
+							index[ i ]=s
+						table['brackets']['i']-=1
+						if s==at:
+							return index
+					elif not n and c == '[':
+						table['braces']['i']+=1
+						table['braces']['open'][table['braces']['i']]=i
+					elif not n and c == ']':
+						s=table['braces']['open'][table['braces']['i']]
+						index[ s ]=i
+						if both:
+							index[ i ]=s
+						table['braces']['i']-=1
+						if s==at:
+							return index
+					elif not n and c == '(':
+						table['par']['i']+=1
+						table['par']['open'][table['par']['i']]=i
+					elif not n and c == ')':
+						s=table['par']['open'][table['par']['i']]
+						index[ s ]=i
+						if both:
+							index[ i ]=s
+						table['par']['i']-=1
+						if s==at:
+							return index
+		
 		return index
 
 
