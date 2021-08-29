@@ -306,5 +306,5 @@ class Simple_JSON_Fix:
 
 
 
-# test=Simple_JSON_Fix( 'file.json', save='file-FIXED.json' )
+test=Simple_JSON_Fix( 'D:\\tech\\programs\\databank\\tables\\keychain.hash', save=1 )
 # python_variable=test.var
